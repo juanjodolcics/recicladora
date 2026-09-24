@@ -8,3 +8,26 @@ services:
       MYSQL_ROOT_PASSWORD: root123
     ports:
       - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot123"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  flyway:
+    image: redgate/flyway:11        # usa la versión vigente
+    command: -connectRetries=10 migrate
+    environment:
+      FLYWAY_URL: jdbc:mysql://mysql:3306/appdb?allowPublicKeyRetrieval=true
+      FLYWAY_USER: app
+      FLYWAY_PASSWORD: app123
+    volumes:
+      - ./db/migration:/flyway/sql
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+volumes:
+  mysql_data:
